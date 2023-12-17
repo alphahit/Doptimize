@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "27081131225",
+    "project_id": "doptimize-6ca8b",
+    "storage_bucket": "doptimize-6ca8b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:27081131225:android:09496cd79c1856a3e32ac8",
+        "android_client_info": {
+          "package_name": "com.doptimize"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATYtiDrIVehMzy2dSQ1lAwaVCgfXjV5cM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
