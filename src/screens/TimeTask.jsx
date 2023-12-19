@@ -11,20 +11,33 @@ import {
 import React, {useState, useEffect} from 'react';
 import firestore from '@react-native-firebase/firestore';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import Inputs from '../components/Inputs';
 export default function TimeTask({navigation}) {
   //FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
   const [users, setUsers] = useState([]); // State to store user data
   const [activity, setActivity] = useState('');
-  const [date, setDate] = useState(new Date());
+  const [displayTime, setDisplayTime] = useState('')
+  const [time, setTime] = useState(new Date());
   const [show, setShow] = useState(false);
   const [completeTable, setCompleteTable] = useState([]);
   const [refreshing, setRefreshing] = React.useState(false);
   const onChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
+
+
+
+
+
+   
+
+
     setShow(false);
-    setDate(currentDate);
+    let timeString = selectedDate.getHours().toString().padStart(2, '0') + ':' + selectedDate.getMinutes().toString().padStart(2, '0');
+    console.log(timeString)
+    setActivity({...activity, time: timeString})
+    setDisplayTime(timeString)
+ 
+
   };
-  // Fetch user data from Firestore when the component first mounts.
 
   const fetchUsers = async () => {
     // This function will handle the process of fetching user data from Firestore.
@@ -58,28 +71,16 @@ export default function TimeTask({navigation}) {
   const fetchTimeTable = async () => {
     try {
       const querySnapshot = await firestore().collection('Time Table').get();
-      const timeData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        // Convert Firestore Timestamp to JavaScript Date object, then to a string
-        const timeString = data.time
-          ? data.time.toDate().toString()
-          : 'No time';
-        return {
-          id: doc.id,
-          activity: data.activity,
-          time: timeString,
-        };
-      });
+      const timeData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       setCompleteTable(timeData);
     } catch (error) {
       console.error('Error fetching timetable:', error);
     }
   };
-  const submitForm = () => {
-    // Handle the form submission, e.g., save the data
-    console.log('Activity:', activity);
-    console.log('Time:', date);
-  };
+
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -90,6 +91,7 @@ export default function TimeTask({navigation}) {
   }, []);
 
   useEffect(() => {
+    setActivity('');
     fetchTimeTable();
     fetchUsers();
   }, []);
@@ -108,19 +110,22 @@ export default function TimeTask({navigation}) {
   };
   const addTimeTable = async timetabledata => {
     try {
-      // Convert JavaScript Date to Firestore Timestamp before storing
-      const timestamp = firestore.Timestamp.fromDate(timetabledata.time);
-      await firestore()
-        .collection('Time Table')
-        .add({
-          ...timetabledata,
-          time: timestamp,
-        });
+      // Format the time as a string (e.g., "15:30" for 3:30 PM)
+      // const timeString =
+      //   timetabledata.time.getHours().toString().padStart(2, '0') +
+      //   ':' +
+      //   timetabledata.time.getMinutes().toString().padStart(2, '0');
+      //   setDisplayTime(timeString)
+      console.log("timetabledata ======>",timetabledata)
+      //await firestore().collection('Time Table').add(timetabledata);
       console.log('Time Table Data added!');
     } catch (error) {
       console.error('Error writing to Firestore:', error);
     }
   };
+  const onChangeInput = (text, field) => {
+    setActivity({...activity, [field]:text});
+  }
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -128,31 +133,14 @@ export default function TimeTask({navigation}) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-        <Text>Time Tasks</Text>
-        {users.map((user, index) => (
-          <View key={index} style={styles.userItem}>
-            <Text>Name: {user.name}</Text>
-            {/* Add more user details here if needed */}
-          </View>
-        ))}
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() =>
-            addUser({
-              name: 'Jane Doe',
-              email: 'janedoe@example.com',
-              age: 28,
-            })
-          }>
-          <Text>Add User</Text>
-        </TouchableOpacity>
+      
         <View style={{}}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter activity"
-            value={activity}
-            onChangeText={setActivity}
+
+          <Inputs 
+          placeholder={'Enter Activity'}
+          label="Activity"
+          name='activity'
+          onChangeHnadler={text=>onChangeInput(text,'activity')}
           />
           <View style={styles.pickerContainer}>
             <TouchableOpacity onPress={() => setShow(true)}>
@@ -161,25 +149,26 @@ export default function TimeTask({navigation}) {
             {show && (
               <DateTimePicker
                 testID="dateTimePicker"
-                value={date}
-                mode="time"
+                value={time}
+                mode="time" // Ensure this is set to 'time'
                 is24Hour={true}
                 display="default"
                 onChange={onChange}
               />
             )}
           </View>
+          <Text style={{backgroundColor:"pink"}}>{displayTime}</Text>
           <TouchableOpacity
             onPress={() => {
-              addTimeTable({time: date, activity: activity});
+              addTimeTable(activity);
             }}>
             <Text>Submit</Text>
           </TouchableOpacity>
         </View>
-        {completeTable.map((activity, index) => (
+        {completeTable.map((item, index) => (
           <View key={index} style={styles.userItem}>
-            <Text>Activity: {activity.activity}</Text>
-            <Text>Time: {activity.time}</Text>
+            <Text>Activity: {item.activity}</Text>
+            <Text>Time: {item.time}</Text>
           </View>
         ))}
         <TouchableOpacity
