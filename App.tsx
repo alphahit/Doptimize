@@ -16,7 +16,9 @@ function App(): React.JSX.Element {
   const Stack = createStackNavigator();
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator screenOptions={{
+    headerShown: false
+  }}>
         <Stack.Screen name="TimeTask" component={TimeTask} />
         <Stack.Screen name="Details" component={Details} />
       </Stack.Navigator>

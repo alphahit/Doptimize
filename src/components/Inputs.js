@@ -8,7 +8,7 @@ export default function Inputs({
   leftIcon,
   rightIcon,
   numLines,
-  onChangeHnadler,
+  onChangeHandler,
   secure,
   validate,
   errorColor,
@@ -17,7 +17,7 @@ export default function Inputs({
 }) {
   const containerBorder = outlined ? styles.outlined : styles.standard;
   return (
-    <View style={{padding: 10}}>
+    <View style={{}}>
       <Text style={styles.label}>{label}</Text>
       <View
         style={[styles.container, containerBorder, {backgroundColor: bgColor}]}>
@@ -27,7 +27,7 @@ export default function Inputs({
           placeholder={
             placeholder ? placeholder : label ? `Enter ${label}` : ''
           }
-          onChange={onChangeHnadler}
+          onChange={onChangeHandler}
           onEndEditing={validate}
           multiline={numLines > 1}
           numberOfLines={numLines}
@@ -43,9 +43,10 @@ export default function Inputs({
 const styles = StyleSheet.create({
   label: {
     fontWeight: "500",
+    color:'white'
   },
   container: {
-    padding: 10,
+    
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',

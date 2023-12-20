@@ -7,8 +7,9 @@ import {
   ScrollView,
   SafeAreaView,
   RefreshControl,
+  Animated,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import firestore from '@react-native-firebase/firestore';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Inputs from '../components/Inputs';
@@ -16,28 +17,44 @@ export default function TimeTask({navigation}) {
   //FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
   const [users, setUsers] = useState([]); // State to store user data
   const [activity, setActivity] = useState('');
-  const [displayTime, setDisplayTime] = useState('')
+  const [displayTime, setDisplayTime] = useState('');
   const [time, setTime] = useState(new Date());
   const [show, setShow] = useState(false);
   const [completeTable, setCompleteTable] = useState([]);
   const [refreshing, setRefreshing] = React.useState(false);
+  const scaleValue = useRef(new Animated.Value(1)).current;
   const onChange = (event, selectedDate) => {
-
-
-
-
-
-   
-
-
     setShow(false);
-    let timeString = selectedDate.getHours().toString().padStart(2, '0') + ':' + selectedDate.getMinutes().toString().padStart(2, '0');
-    console.log(timeString)
-    setActivity({...activity, time: timeString})
-    setDisplayTime(timeString)
- 
-
+    let timeString =
+      selectedDate.getHours().toString().padStart(2, '0') +
+      ':' +
+      selectedDate.getMinutes().toString().padStart(2, '0');
+    console.log(timeString);
+    setActivity({...activity, time: timeString});
+    setDisplayTime(timeString);
   };
+  const animatePress = () => {
+    Animated.sequence([
+      Animated.timing(scaleValue, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleValue, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    addTimeTable(activity); // call your function here
+  };
+  const animatedStyle = {
+    transform: [{scale: scaleValue}],
+  };
+  useEffect(() => {
+    console.log('Activity ===========>', activity);
+  }, [activity]);
 
   const fetchUsers = async () => {
     // This function will handle the process of fetching user data from Firestore.
@@ -81,7 +98,6 @@ export default function TimeTask({navigation}) {
     }
   };
 
-
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
 
@@ -116,16 +132,17 @@ export default function TimeTask({navigation}) {
       //   ':' +
       //   timetabledata.time.getMinutes().toString().padStart(2, '0');
       //   setDisplayTime(timeString)
-      console.log("timetabledata ======>",timetabledata)
-      //await firestore().collection('Time Table').add(timetabledata);
+      console.log('timetabledata ======>', timetabledata);
+      await firestore().collection('Time Table').add(timetabledata);
       console.log('Time Table Data added!');
     } catch (error) {
       console.error('Error writing to Firestore:', error);
     }
   };
   const onChangeInput = (text, field) => {
-    setActivity({...activity, [field]:text});
-  }
+    console.log('onChangeInput=======>', text.nativeEvent.text, field);
+    setActivity({...activity, [field]: text.nativeEvent.text});
+  };
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -133,49 +150,58 @@ export default function TimeTask({navigation}) {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
-      
-        <View style={{}}>
-
-          <Inputs 
-          placeholder={'Enter Activity'}
-          label="Activity"
-          name='activity'
-          onChangeHnadler={text=>onChangeInput(text,'activity')}
+        {show && (
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={time}
+            mode="time" // Ensure this is set to 'time'
+            is24Hour={true}
+            display="default"
+            onChange={onChange}
           />
-          <View style={styles.pickerContainer}>
-            <TouchableOpacity onPress={() => setShow(true)}>
-              <Text>Show time picker</Text>
-            </TouchableOpacity>
-            {show && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={time}
-                mode="time" // Ensure this is set to 'time'
-                is24Hour={true}
-                display="default"
-                onChange={onChange}
-              />
-            )}
-          </View>
-          <Text style={{backgroundColor:"pink"}}>{displayTime}</Text>
-          <TouchableOpacity
-            onPress={() => {
-              addTimeTable(activity);
-            }}>
-            <Text>Submit</Text>
+        )}
+      
+          <Inputs
+            placeholder={'Enter Task'}
+            label="Task"
+            name="task"
+            onChangeHandler={text => onChangeInput(text, 'task')}
+            bgColor="#e1f3f8"
+            outlined
+          />
+
+<TouchableOpacity style={styles.pickerContainer}
+ onPress={() => setShow(true)}>
+     
+       
+      
+       
+        <Text style={{
+           marginLeft: 8,
+           color: 'white',
+           fontSize: 16,
+        }}>Time</Text>
+     
+      <Text style={styles.displayTime}>{displayTime}</Text>
+    </TouchableOpacity>
+          
+          <TouchableOpacity onPress={animatePress}>
+            <Animated.View style={[styles.button, animatedStyle]}>
+              <Text style={styles.textWhite}>Submit</Text>
+            </Animated.View>
           </TouchableOpacity>
-        </View>
+     
         {completeTable.map((item, index) => (
           <View key={index} style={styles.userItem}>
-            <Text>Activity: {item.activity}</Text>
-            <Text>Time: {item.time}</Text>
+            <Text style={styles.textWhite}>Activity: {item.task}</Text>
+            <Text style={styles.textWhite}>Time: {item.time}</Text>
           </View>
         ))}
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('Details')}>
-          <Text>Open Details</Text>
-        </TouchableOpacity>
+          <Text style={styles.textWhite}>Open Details</Text>
+        </TouchableOpacity> */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -188,16 +214,41 @@ const styles = StyleSheet.create({
   scrollcontainer: {
     backgroundColor: 'black',
     flex: 1,
+    padding: 10,
   },
+
   userItem: {
     margin: 10,
     padding: 10,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#ddd',
+    borderRadius:5
   },
   button: {
-    alignItems: 'center',
-    backgroundColor: '#DDDDDD',
+    backgroundColor: '#4CAF50', // Example color
     padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textWhite: {
+    color: 'white',
+    fontSize: 16,
+  },
+  pickerContainer: {
+    padding: 10,
+    backgroundColor: '#6200EE', // Example vibrant color
+    borderRadius: 4,
+    elevation: 4, // Shadow effect
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom:20
+  },
+  displayTime: {
+    backgroundColor: 'black',
+    color: 'white',
+    padding: 8,
+    borderRadius: 4,
   },
 });
