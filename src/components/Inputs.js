@@ -13,6 +13,7 @@ export default function Inputs({
   validate,
   errorColor,
   errorMessage,
+  placeholderTextColor,
   bgColor = 'white',
 }) {
   const containerBorder = outlined ? styles.outlined : styles.standard;
@@ -27,6 +28,7 @@ export default function Inputs({
           placeholder={
             placeholder ? placeholder : label ? `Enter ${label}` : ''
           }
+          placeholderTextColor={placeholderTextColor}
           onChange={onChangeHandler}
           onEndEditing={validate}
           multiline={numLines > 1}

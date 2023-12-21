@@ -13,9 +13,12 @@ import React, {useState, useEffect, useRef} from 'react';
 import firestore from '@react-native-firebase/firestore';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Inputs from '../components/Inputs';
+import Ionicons from 'react-native-vector-icons/dist/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/dist/Ionicons';
+
 export default function TimeTask({navigation}) {
   //FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
-  const [users, setUsers] = useState([]); // State to store user data
+  //const [users, setUsers] = useState([]); // State to store user data
   const [activity, setActivity] = useState('');
   const [displayTime, setDisplayTime] = useState('');
   const [time, setTime] = useState(new Date());
@@ -32,6 +35,18 @@ export default function TimeTask({navigation}) {
     console.log(timeString);
     setActivity({...activity, time: timeString});
     setDisplayTime(timeString);
+  };
+  const deleteItem = async (itemId) => {
+    try {
+      // Delete from Firestore
+      await firestore().collection('Time Table').doc(itemId).delete();
+      console.log('Item deleted!');
+  
+      // Update local state
+      setCompleteTable(prevItems => prevItems.filter(item => item.id !== itemId));
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    }
   };
   const animatePress = () => {
     Animated.sequence([
@@ -56,35 +71,35 @@ export default function TimeTask({navigation}) {
     console.log('Activity ===========>', activity);
   }, [activity]);
 
-  const fetchUsers = async () => {
-    // This function will handle the process of fetching user data from Firestore.
+  // const fetchUsers = async () => {
+  //   // This function will handle the process of fetching user data from Firestore.
 
-    try {
-      const querySnapshot = await firestore().collection('Users').get();
-      // Here, firestore() initializes the Firestore instance.
-      // .collection('Users') refers to the 'Users' collection in your Firestore database.
-      // .get() is an asynchronous method that fetches the data from the 'Users' collection.
-      // The await keyword waits for the .get() operation to complete before moving on to the next line.
-      // The result of this operation is stored in querySnapshot, which contains the data retrieved from Firestore.
+  //   try {
+  //     const querySnapshot = await firestore().collection('Users').get();
+  //     // Here, firestore() initializes the Firestore instance.
+  //     // .collection('Users') refers to the 'Users' collection in your Firestore database.
+  //     // .get() is an asynchronous method that fetches the data from the 'Users' collection.
+  //     // The await keyword waits for the .get() operation to complete before moving on to the next line.
+  //     // The result of this operation is stored in querySnapshot, which contains the data retrieved from Firestore.
 
-      const usersData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      // querySnapshot.docs is an array of document snapshots, where each snapshot represents a document.
-      // .map() is a JavaScript array method used to transform each element in an array.
-      // For each document (doc) in querySnapshot.docs, we create a new object.
-      // doc.id is the document's unique ID in Firestore.
-      // doc.data() is a method that returns the data of the document as an object.
-      // The spread operator (...) is used to include all the fields from doc.data() in the new object.
-      // As a result, usersData becomes an array of user objects, each containing the document ID and its data.
+  //     const usersData = querySnapshot.docs.map(doc => ({
+  //       id: doc.id,
+  //       ...doc.data(),
+  //     }));
+  //     // querySnapshot.docs is an array of document snapshots, where each snapshot represents a document.
+  //     // .map() is a JavaScript array method used to transform each element in an array.
+  //     // For each document (doc) in querySnapshot.docs, we create a new object.
+  //     // doc.id is the document's unique ID in Firestore.
+  //     // doc.data() is a method that returns the data of the document as an object.
+  //     // The spread operator (...) is used to include all the fields from doc.data() in the new object.
+  //     // As a result, usersData becomes an array of user objects, each containing the document ID and its data.
 
-      setUsers(usersData);
-      // This line updates the users state with the array of user objects we obtained from Firestore.
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
+  //     setUsers(usersData);
+  //     // This line updates the users state with the array of user objects we obtained from Firestore.
+  //   } catch (error) {
+  //     console.error('Error fetching users:', error);
+  //   }
+  // };
   const fetchTimeTable = async () => {
     try {
       const querySnapshot = await firestore().collection('Time Table').get();
@@ -100,7 +115,6 @@ export default function TimeTask({navigation}) {
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
@@ -109,21 +123,22 @@ export default function TimeTask({navigation}) {
   useEffect(() => {
     setActivity('');
     fetchTimeTable();
-    fetchUsers();
+    // fetchUsers();
   }, []);
   useEffect(() => {
     fetchTimeTable();
-    fetchUsers();
+
+    //fetchUsers();
   }, [refreshing]);
 
-  const addUser = async userData => {
-    try {
-      await firestore().collection('Users').add(userData);
-      console.log('User added!');
-    } catch (error) {
-      console.error('Error writing user to Firestore:', error);
-    }
-  };
+  // const addUser = async userData => {
+  //   try {
+  //     await firestore().collection('Users').add(userData);
+  //     console.log('User added!');
+  //   } catch (error) {
+  //     console.error('Error writing user to Firestore:', error);
+  //   }
+  // };
   const addTimeTable = async timetabledata => {
     try {
       // Format the time as a string (e.g., "15:30" for 3:30 PM)
@@ -160,43 +175,54 @@ export default function TimeTask({navigation}) {
             onChange={onChange}
           />
         )}
-      
-          <Inputs
-            placeholder={'Enter Task'}
-            label="Task"
-            name="task"
-            onChangeHandler={text => onChangeInput(text, 'task')}
-            bgColor="#e1f3f8"
-            outlined
-          />
 
-<TouchableOpacity style={styles.pickerContainer}
- onPress={() => setShow(true)}>
-     
-       
-      
-       
-        <Text style={{
-           marginLeft: 8,
-           color: 'white',
-           fontSize: 16,
-        }}>Time</Text>
-     
-      <Text style={styles.displayTime}>{displayTime}</Text>
-    </TouchableOpacity>
-          
-          <TouchableOpacity onPress={animatePress}>
-            <Animated.View style={[styles.button, animatedStyle]}>
-              <Text style={styles.textWhite}>Submit</Text>
-            </Animated.View>
-          </TouchableOpacity>
-     
-        {completeTable.map((item, index) => (
-          <View key={index} style={styles.userItem}>
-            <Text style={styles.textWhite}>Activity: {item.task}</Text>
-            <Text style={styles.textWhite}>Time: {item.time}</Text>
+        <Inputs
+          placeholder={'Enter Task'}
+          label="Task"
+          name="task"
+          onChangeHandler={text => onChangeInput(text, 'task')}
+          bgColor="#e1f3f8"
+          outlined
+          placeholderTextColor="#000"
+        />
+
+        <TouchableOpacity
+          style={styles.pickerContainer}
+          onPress={() => setShow(true)}>
+          <View style={{flexDirection:"row", alignItems:'center'}}>
+            <Ionicons name="time-sharp" size={24} color={'red'} />
+            <Text
+              style={{
+                marginLeft: 8,
+                color: 'white',
+                fontSize: 16,
+              }}>
+              Time
+            </Text>
           </View>
-        ))}
+
+          {displayTime !== '' && (
+            <Text style={styles.displayTime}>{displayTime}</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={animatePress}>
+          <Animated.View style={[styles.button, animatedStyle]}>
+            <Text style={styles.textWhite}>Submit</Text>
+          </Animated.View>
+        </TouchableOpacity>
+
+        {completeTable.map((item, index) => (
+  <View key={index} style={styles.userItem}>
+    <View>
+      <Text style={styles.textWhite}>Activity: {item.task}</Text>
+      <Text style={styles.textWhite}>Time: {item.time}</Text>
+    </View>
+    <TouchableOpacity onPress={() => deleteItem(item.id)}>
+      <Ionicons name="remove-circle" size={24} color={'red'} />
+    </TouchableOpacity>
+  </View>
+))}
         {/* <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('Details')}>
@@ -222,7 +248,10 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 2,
     borderColor: '#ddd',
-    borderRadius:5
+    borderRadius: 5,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems:'center',
   },
   button: {
     backgroundColor: '#4CAF50', // Example color
@@ -243,7 +272,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom:20
+    marginBottom: 20,
   },
   displayTime: {
     backgroundColor: 'black',
