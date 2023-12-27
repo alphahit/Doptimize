@@ -8,13 +8,14 @@ import {
   SafeAreaView,
   RefreshControl,
   Animated,
+  Dimensions 
 } from 'react-native';
 import React, {useState, useEffect, useRef} from 'react';
 import firestore from '@react-native-firebase/firestore';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Inputs from '../components/Inputs';
 import Ionicons from 'react-native-vector-icons/dist/Ionicons';
-import MaterialCommunityIcons from 'react-native-vector-icons/dist/Ionicons';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 
 export default function TimeTask({navigation}) {
   //FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
@@ -26,6 +27,14 @@ export default function TimeTask({navigation}) {
   const [completeTable, setCompleteTable] = useState([]);
   const [refreshing, setRefreshing] = React.useState(false);
   const scaleValue = useRef(new Animated.Value(1)).current;
+  const screenHeight = Dimensions.get('window').height;
+  const screenWidth = Dimensions.get('window').width;
+const RPH = (percentage) => {
+return (percentage / 100) * screenHeight; 
+};
+const RPW = (percentage) => {
+  return (percentage / 100) * screenWidth;
+};
   const onChange = (event, selectedDate) => {
     setShow(false);
     let timeString =
@@ -36,14 +45,16 @@ export default function TimeTask({navigation}) {
     setActivity({...activity, time: timeString});
     setDisplayTime(timeString);
   };
-  const deleteItem = async (itemId) => {
+  const deleteItem = async itemId => {
     try {
       // Delete from Firestore
       await firestore().collection('Time Table').doc(itemId).delete();
       console.log('Item deleted!');
-  
+
       // Update local state
-      setCompleteTable(prevItems => prevItems.filter(item => item.id !== itemId));
+      setCompleteTable(prevItems =>
+        prevItems.filter(item => item.id !== itemId),
+      );
     } catch (error) {
       console.error('Error deleting item:', error);
     }
@@ -71,35 +82,6 @@ export default function TimeTask({navigation}) {
     console.log('Activity ===========>', activity);
   }, [activity]);
 
-  // const fetchUsers = async () => {
-  //   // This function will handle the process of fetching user data from Firestore.
-
-  //   try {
-  //     const querySnapshot = await firestore().collection('Users').get();
-  //     // Here, firestore() initializes the Firestore instance.
-  //     // .collection('Users') refers to the 'Users' collection in your Firestore database.
-  //     // .get() is an asynchronous method that fetches the data from the 'Users' collection.
-  //     // The await keyword waits for the .get() operation to complete before moving on to the next line.
-  //     // The result of this operation is stored in querySnapshot, which contains the data retrieved from Firestore.
-
-  //     const usersData = querySnapshot.docs.map(doc => ({
-  //       id: doc.id,
-  //       ...doc.data(),
-  //     }));
-  //     // querySnapshot.docs is an array of document snapshots, where each snapshot represents a document.
-  //     // .map() is a JavaScript array method used to transform each element in an array.
-  //     // For each document (doc) in querySnapshot.docs, we create a new object.
-  //     // doc.id is the document's unique ID in Firestore.
-  //     // doc.data() is a method that returns the data of the document as an object.
-  //     // The spread operator (...) is used to include all the fields from doc.data() in the new object.
-  //     // As a result, usersData becomes an array of user objects, each containing the document ID and its data.
-
-  //     setUsers(usersData);
-  //     // This line updates the users state with the array of user objects we obtained from Firestore.
-  //   } catch (error) {
-  //     console.error('Error fetching users:', error);
-  //   }
-  // };
   const fetchTimeTable = async () => {
     try {
       const querySnapshot = await firestore().collection('Time Table').get();
@@ -131,22 +113,8 @@ export default function TimeTask({navigation}) {
     //fetchUsers();
   }, [refreshing]);
 
-  // const addUser = async userData => {
-  //   try {
-  //     await firestore().collection('Users').add(userData);
-  //     console.log('User added!');
-  //   } catch (error) {
-  //     console.error('Error writing user to Firestore:', error);
-  //   }
-  // };
   const addTimeTable = async timetabledata => {
     try {
-      // Format the time as a string (e.g., "15:30" for 3:30 PM)
-      // const timeString =
-      //   timetabledata.time.getHours().toString().padStart(2, '0') +
-      //   ':' +
-      //   timetabledata.time.getMinutes().toString().padStart(2, '0');
-      //   setDisplayTime(timeString)
       console.log('timetabledata ======>', timetabledata);
       await firestore().collection('Time Table').add(timetabledata);
       console.log('Time Table Data added!');
@@ -160,11 +128,7 @@ export default function TimeTask({navigation}) {
   };
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.scrollcontainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }>
+      <View style={styles.scrollcontainer}>
         {show && (
           <DateTimePicker
             testID="dateTimePicker"
@@ -185,50 +149,71 @@ export default function TimeTask({navigation}) {
           outlined
           placeholderTextColor="#000"
         />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 20,
+          }}>
+          <TouchableOpacity
+            style={styles.pickerContainer}
+            onPress={() => setShow(true)}>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Ionicons name="time-sharp" size={24} color={'red'} />
+              <Text
+                style={{
+                  marginLeft: 8,
+                  color: 'white',
+                  fontSize: 16,
+                }}>
+                Time
+              </Text>
+            </View>
 
-        <TouchableOpacity
-          style={styles.pickerContainer}
-          onPress={() => setShow(true)}>
-          <View style={{flexDirection:"row", alignItems:'center'}}>
-            <Ionicons name="time-sharp" size={24} color={'red'} />
-            <Text
-              style={{
-                marginLeft: 8,
-                color: 'white',
-                fontSize: 16,
-              }}>
-              Time
-            </Text>
-          </View>
+            {displayTime !== '' && (
+              <Text style={styles.displayTime}>{displayTime}</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={animatePress} style={{}}>
+            <Animated.View style={[styles.button, animatedStyle]}>
+              <Text style={styles.textWhite}>Submit</Text>
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
 
-          {displayTime !== '' && (
-            <Text style={styles.displayTime}>{displayTime}</Text>
+        <DraggableFlatList
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          data={completeTable}
+          renderItem={({item, drag, isActive}) => (
+            <TouchableOpacity
+              onLongPress={drag}
+              style={[
+                styles.userItem,
+                {backgroundColor: isActive ? 'grey' : 'black'},
+              ]}>
+              <View>
+                <Text style={styles.textWhite}>Activity: {item.task}</Text>
+                <Text style={styles.textWhite}>Time: {item.time}</Text>
+              </View>
+              <TouchableOpacity onPress={() => deleteItem(item.id)}>
+                <Ionicons name="remove-circle" size={24} color={'red'} />
+              </TouchableOpacity>
+            </TouchableOpacity>
           )}
-        </TouchableOpacity>
+          keyExtractor={(item, index) => `draggable-item-${item.id}`}
+          onDragEnd={({data}) => setCompleteTable(data)}
+        />
 
-        <TouchableOpacity onPress={animatePress}>
-          <Animated.View style={[styles.button, animatedStyle]}>
-            <Text style={styles.textWhite}>Submit</Text>
-          </Animated.View>
-        </TouchableOpacity>
-
-        {completeTable.map((item, index) => (
-  <View key={index} style={styles.userItem}>
-    <View>
-      <Text style={styles.textWhite}>Activity: {item.task}</Text>
-      <Text style={styles.textWhite}>Time: {item.time}</Text>
-    </View>
-    <TouchableOpacity onPress={() => deleteItem(item.id)}>
-      <Ionicons name="remove-circle" size={24} color={'red'} />
-    </TouchableOpacity>
-  </View>
-))}
         {/* <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('Details')}>
           <Text style={styles.textWhite}>Open Details</Text>
         </TouchableOpacity> */}
-      </ScrollView>
+      </View>
+      <TouchableOpacity style={{position:'absolute', bottom:10, marginLeft: RPW(45)}} onPress={onRefresh}><Ionicons name="refresh-circle" size={40} color={'red'} /></TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -236,10 +221,8 @@ export default function TimeTask({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollcontainer: {
     backgroundColor: 'black',
-    flex: 1,
+  
     padding: 10,
   },
 
@@ -251,7 +234,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems:'center',
+    alignItems: 'center',
   },
   button: {
     backgroundColor: '#4CAF50', // Example color
@@ -272,12 +255,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+
+    flex: 0.9,
   },
   displayTime: {
     backgroundColor: 'black',
     color: 'white',
     padding: 8,
     borderRadius: 4,
+    maxHeight: 40,
   },
 });
